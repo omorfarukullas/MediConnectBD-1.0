@@ -1,0 +1,9 @@
+{
+  "name": "MediConnect BD",
+  "description": "A comprehensive digital healthcare management system for Bangladesh integrating appointments, smart queue tracking, telemedicine, and real-time hospital resource monitoring.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
