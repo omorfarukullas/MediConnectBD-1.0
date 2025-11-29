@@ -12,13 +12,6 @@ import appointmentRoutes from './routes/appointmentRoutes';
 import emergencyRoutes from './routes/emergencyRoutes';
 
 dotenv.config();
-connectDB();
-createTables();
-
-// Optional: seed data on startup (only if SEED_DATA=true in .env)
-if (process.env.SEED_DATA === 'true') {
-  seedDatabase();
-}
 
 const app = express();
 const server = http.createServer(app);
@@ -28,10 +21,10 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-// Routes
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/emergency', emergencyRoutes);
+
 // Socket.io for Real-time Features (Queue, Chat)
 const io = new Server(server, {
     cors: { origin: "*" }
@@ -67,13 +60,40 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Initialize server properly with async startup
+async function startServer() {
+  try {
+    console.log('🔄 Connecting to MySQL database...');
+    await connectDB();
+    console.log('✅ Database connected');
 
-// Graceful shutdown (only respond to explicit SIGINT from terminal, not from child processes)
+    console.log('📋 Creating tables...');
+    await createTables();
+    console.log('✅ Tables created');
+
+    // Optional: seed data on startup (only if SEED_DATA=true in .env)
+    if (process.env.SEED_DATA === 'true') {
+      console.log('🌱 Seeding database...');
+      await seedDatabase();
+      console.log('✅ Seed data loaded');
+    }
+
+    server.listen(PORT, () => {
+      console.log(`\n✅ Server running on port ${PORT}`);
+      console.log(`📍 API endpoint: http://localhost:${PORT}`);
+      console.log('\n🚀 MediConnect Backend Ready!\n');
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
 let shutdownInProgress = false;
 
 process.on('SIGINT', async () => {
-  if (shutdownInProgress) return; // Prevent multiple signals
+  if (shutdownInProgress) return;
   shutdownInProgress = true;
   console.log('\n📊 Shutting down gracefully...');
   io.close();
@@ -99,3 +119,6 @@ process.on('SIGTERM', async () => {
     process.exit(0);
   });
 });
+
+// Start the server
+startServer();
